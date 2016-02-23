@@ -204,26 +204,22 @@ func resourceAwsVolumeAttachmentDelete(d *schema.ResourceData, meta interface{})
 
 	_, err := conn.StopInstances(instance_stop_opts)
 
-	if err != nil {
-		return fmt.Errorf(
-			"Error stopping Instance via aws api: %s",
-			iID)
-	}
-
-	instanceStateConf := &resource.StateChangeConf{
-		Pending:    []string{"stopping"},
-		Target:     []string{"stopped"},
-		Refresh:    InstanceStateRefreshFunc2(conn, iID),
-		Timeout:    10 * time.Minute,
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
-	}
-	log.Printf("[DEBUG] Stopping instance (%s)", iID)
-	_, err = instanceStateConf.WaitForState()
-	if err != nil {
-		return fmt.Errorf(
-			"Error waiting for Instance: %s to stop",
-			iID)
+	if err == nil {
+		instanceStateConf := &resource.StateChangeConf{
+			Pending:    []string{"stopping"},
+			Target:     []string{"stopped"},
+			Refresh:    InstanceStateRefreshFunc2(conn, iID),
+			Timeout:    10 * time.Minute,
+			Delay:      10 * time.Second,
+			MinTimeout: 3 * time.Second,
+		}
+		log.Printf("[DEBUG] Stopping instance (%s)", iID)
+		_, err = instanceStateConf.WaitForState()
+		if err != nil {
+			return fmt.Errorf(
+				"Error waiting for Instance: %s to stop",
+				iID)
+		}
 	}
 
 	opts := &ec2.DetachVolumeInput{
