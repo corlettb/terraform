@@ -205,9 +205,10 @@ func resourceAwsVolumeAttachmentDelete(d *schema.ResourceData, meta interface{})
 	_, err := conn.StopInstances(instance_stop_opts)
 
 	if err == nil {
+		// if the node is tainted it might end up getting terminated at the same time
 		instanceStateConf := &resource.StateChangeConf{
 			Pending:    []string{"stopping"},
-			Target:     []string{"stopped"},
+			Target:     []string{"stopped", "terminated"},
 			Refresh:    InstanceStateRefreshFunc2(conn, iID),
 			Timeout:    10 * time.Minute,
 			Delay:      10 * time.Second,
